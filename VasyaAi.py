@@ -1,200 +1,121 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Vasya Ai - Умный чат-бот помощник
-Приложение для работы в терминале Python
+Vasya Ai - Умный чат-бот для решения любых проблем.
+Версия 2.0: Модульная архитектура с расширенными возможностями.
+
+Запуск в Visual Studio 2019:
+1. Откройте этот файл
+2. Убедитесь, что Python установлен
+3. Нажмите F5 или кнопку "Run"
 """
 
-import random
-import datetime
-import re
+import sys
+from datetime import datetime
+from context_manager import ConversationContext
+from ai_engine import VasyaAiEngine
 
-class VasyaAi:
+
+class VasyaAiBot:
+    """Основной класс чат-бота Vasya Ai."""
+    
     def __init__(self):
-        self.name = "Vasya Ai"
-        self.user_name = None
-        self.conversation_history = []
+        self.context = ConversationContext()
+        self.engine = VasyaAiEngine()
+        self.is_running = True
+        self.commands = ['помощь', 'история', 'очистить', 'контекст', 'темы', 'пока', 'выход']
+    
+    def start(self):
+        """Запускает чат-бота."""
+        self._print_welcome()
         
-        # База знаний для ответов
-        self.knowledge_base = {
-            'привет': [
-                "Привет! Я Vasya Ai, твой друг и помощник!",
-                "Здравствуй! Чем могу помочь?",
-                "Приветствую! Готов решить любую твою проблему!"
-            ],
-            'как дела': [
-                "Отлично! Спасибо, что спросил. А у тебя как?",
-                "Всё прекрасно! Я же искусственный интеллект 😊",
-                "Замечательно! Готов помогать тебе 24/7!"
-            ],
-            'помощь': [
-                "Я могу помочь тебе с советом, информацией или просто поболтать!",
-                "Спрашивай о чём угодно - я постараюсь помочь!",
-                "Я здесь чтобы решать твои проблемы. Что случилось?"
-            ],
-            'проблема': [
-                "Расскажи подробнее о проблеме, и мы вместе её решим!",
-                "Не переживай, я помогу тебе разобраться.",
-                "Любая проблема решаема! Давай обсудим."
-            ],
-            'совет': [
-                "Всегда планируй свои действия заранее.",
-                "Не бойся просить о помощи - это признак силы.",
-                "Разбивай большие задачи на маленькие шаги."
-            ],
-            'мотивация': [
-                "Ты можешь всё! Верь в себя!",
-                "Каждый день - новая возможность стать лучше!",
-                "Препятствия делают нас сильнее!"
-            ],
-            'погода': [
-                "Я не могу проверить погоду напрямую, но рекомендую посмотреть прогноз.",
-                "Посмотри в приложении погоды или спроси у голосового помощника.",
-                "Надеюсь, у тебя за окном хорошая погода!"
-            ],
-            'время': [
-                f"Сейчас {datetime.datetime.now().strftime('%H:%M')}",
-                "Время летит быстро, когда занимаешься интересными делами!"
-            ],
-            'дата': [
-                f"Сегодня {datetime.datetime.now().strftime('%d.%m.%Y')}",
-                "Отличный день для новых достижений!"
-            ],
-            'кто ты': [
-                "Я Vasya Ai - твой умный друг и помощник!",
-                "Я искусственный интеллект, созданный чтобы помогать людям.",
-                "Я Vasya Ai, готов решить любые твои проблемы!"
-            ],
-            'что умеешь': [
-                "Я могу отвечать на вопросы, давать советы, поддерживать беседу.",
-                "Помогаю с решением проблем, мотивирую и ищу информацию.",
-                "Я универсальный помощник для любых задач!"
-            ],
-            'спасибо': [
-                "Всегда пожалуйста! Обращайся ещё!",
-                "Рад был помочь! Ты всегда можешь на меня рассчитывать.",
-                "Не за что! Я же твой друг!"
-            ],
-            'пока': [
-                "До встречи! Возвращайся скорее!",
-                "Удачи! Я всегда здесь, если понадоблюсь.",
-                "Пока! Решай свои проблемы и возвращайся!"
-            ]
-        }
-        
-        # Шаблоны для извлечения информации
-        self.patterns = {
-            'name': r'(меня зовут|мое имя|я\s+(\w+))',
-            'age': r'(\d+)\s*(лет|год|года)',
-            'emotion_positive': r'(рад|весел|счастлив|отлично|замечательно)',
-            'emotion_negative': r'(груст|плох|устал|проблем|тревог)'
-        }
-
-    def get_response(self, user_input):
-        """Получить ответ от бота"""
-        user_input = user_input.lower().strip()
-        
-        # Сохраняем историю
-        self.conversation_history.append({
-            'user': user_input,
-            'time': datetime.datetime.now()
-        })
-        
-        # Проверка на представление пользователя
-        name_match = re.search(self.patterns['name'], user_input)
-        if name_match and not self.user_name:
-            self.user_name = name_match.group(2) if len(name_match.groups()) > 1 else "Друг"
-            return f"Приятно познакомиться, {self.user_name}! Я запомнил твое имя."
-        
-        # Поиск подходящего ответа в базе знаний
-        for key, responses in self.knowledge_base.items():
-            if key in user_input:
-                return random.choice(responses)
-        
-        # Обработка эмоций
-        if re.search(self.patterns['emotion_negative'], user_input):
-            return "Я понимаю, что тебе непросто. Расскажи подробнее, я обязательно помогу!"
-        
-        if re.search(self.patterns['emotion_positive'], user_input):
-            return "Здорово, что у тебя хорошее настроение! Так держать!"
-        
-        # Если вопрос содержит определенные ключевые слова
-        if any(word in user_input for word in ['как', 'что', 'где', 'когда', 'почему', 'зачем']):
-            return "Интересный вопрос! Давай разберемся вместе. Расскажи подробнее о ситуации."
-        
-        # Ответы по умолчанию для разных ситуаций
-        default_responses = [
-            "Я тебя понял. Расскажи подробнее, чтобы я мог лучше помочь.",
-            "Интересная мысль! Продолжай, мне важно понять суть проблемы.",
-            "Хорошо, давай обсудим это детальнее. Что именно тебя беспокоит?",
-            "Я здесь чтобы помочь. Объясни ситуацию подробнее.",
-            "Понимаю. Какие варианты решения ты уже рассматривал?",
-            "Это важная тема. Давай подумаем вместе над решением."
-        ]
-        
-        return random.choice(default_responses)
-
-    def start_chat(self):
-        """Запуск чата"""
-        print("=" * 60)
-        print("🤖 VASYA AI - Твой умный друг и помощник")
-        print("=" * 60)
-        print("\nПривет! Я Vasya Ai - нейросеть-помощник.")
-        print("Я здесь чтобы решить любые твои проблемы!")
-        print("\nКоманды:")
-        print("  'помощь' - список возможностей")
-        print("  'пока' - завершить разговор")
-        print("  Просто пиши, и я отвечу!\n")
-        print("-" * 60)
-        
-        while True:
+        while self.is_running:
             try:
-                user_input = input("👤 Ты: ").strip()
+                user_input = self._get_user_input()
                 
                 if not user_input:
                     continue
                 
-                if user_input.lower() in ['пока', 'до свидания', 'выход', 'quit', 'exit']:
-                    print(f"\n🤖 {self.name}: До встречи! Возвращайся скорее!")
-                    break
+                # Проверка на команды
+                if user_input.lower().strip() in self.commands:
+                    response = self.engine.process_command(user_input, self.context)
+                    if user_input.lower().strip() in ['пока', 'выход']:
+                        self._say_goodbye()
+                        break
+                else:
+                    # Попытка извлечь имя пользователя
+                    name = self.engine.extract_user_name(user_input)
+                    if name:
+                        self.context.set_user_name(name)
+                    
+                    # Анализ и генерация ответа
+                    category, params = self.engine.analyze_message(user_input, self.context)
+                    response = self.engine.generate_detailed_response(category, params, self.context)
                 
-                if user_input.lower() == 'история':
-                    self.show_history()
-                    continue
+                # Добавление в историю
+                self.context.add_message("пользователь", user_input)
+                self.context.add_message("Vasya Ai", response)
                 
-                if user_input.lower() == 'очистить':
-                    self.conversation_history.clear()
-                    print("🤖 История очищена.")
-                    continue
-                
-                response = self.get_response(user_input)
-                print(f"\n🤖 {self.name}: {response}\n")
+                # Вывод ответа
+                self._print_response(response)
                 
             except KeyboardInterrupt:
-                print(f"\n\n🤖 {self.name}: До встречи!")
+                print("\n\n⚠️  Работа прервана пользователем.")
+                self._say_goodbye()
                 break
             except Exception as e:
-                print(f"Произошла ошибка: {e}")
-
-    def show_history(self):
-        """Показать историю переписки"""
-        if not self.conversation_history:
-            print("История пуста.")
-            return
+                print(f"\n❌ Произошла ошибка: {e}")
+                print("Попробуйте ещё раз или введите 'помощь'.")
+    
+    def _print_welcome(self):
+        """Выводит приветственное сообщение."""
+        welcome_art = r"""
+ ____   ____  _____ ____  ______ 
+|  _ \ / __ \|  __|___ ||____  |
+| |_) | |  | | |__   / /    / / 
+|  _ <| |  | |  __| / /    / /  
+| |_) | |__| | |__ / /__  / /   
+|____/ \____/|____|_____|/_/    
+      Искусственный Интеллект
+========================================
+"""
+        print(welcome_art)
+        print("🤖 Привет! Я Vasya Ai — твой умный друг и помощник.")
+        print("   Я здесь, чтобы помочь решить любые проблемы!")
+        print("   Введи 'помощь' для списка команд.\n")
         
-        print("\n" + "=" * 40)
-        print("История переписки:")
-        print("=" * 40)
-        for i, msg in enumerate(self.conversation_history[-10:], 1):  # Последние 10 сообщений
-            time_str = msg['time'].strftime('%H:%M')
-            print(f"{i}. [{time_str}] Ты: {msg['user']}")
-        print("=" * 40 + "\n")
+        # Персонализированное приветствие
+        if self.context.get_user_name() != "друг":
+            print(f"   С возвращением, {self.context.get_user_name()}! 👋\n")
+    
+    def _get_user_input(self):
+        """Получает ввод от пользователя."""
+        try:
+            user_name = self.context.get_user_name()
+            prompt = f"\n💬 {user_name}: " if user_name != "друг" else "\n💬 Ты: "
+            return input(prompt).strip()
+        except EOFError:
+            return ""
+    
+    def _print_response(self, response):
+        """Выводит ответ бота."""
+        print(f"\n🤖 Vasya Ai: {response}")
+        print("-" * 60)
+    
+    def _say_goodbye(self):
+        """Выводит прощальное сообщение."""
+        user_name = self.context.get_user_name()
+        farewell = f"\n👋 До встречи, {user_name}!" if user_name != "друг" else "\n👋 До встречи!"
+        print(farewell)
+        print("   Помни: я всегда здесь, если понадобишься помощь.")
+        print("   Возвращайся в любое время!\n")
+        print("=" * 60)
 
 
 def main():
-    """Точка входа в приложение"""
-    bot = VasyaAi()
-    bot.start_chat()
+    """Точка входа в приложение."""
+    bot = VasyaAiBot()
+    bot.start()
 
 
 if __name__ == "__main__":
