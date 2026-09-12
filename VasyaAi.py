@@ -1,122 +1,112 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-Vasya Ai - Умный чат-бот для решения любых проблем.
-Версия 2.0: Модульная архитектура с расширенными возможностями.
-
-Запуск в Visual Studio 2019:
-1. Откройте этот файл
-2. Убедитесь, что Python установлен
-3. Нажмите F5 или кнопку "Run"
+Vasya Ai v3.0 — Главный файл запуска.
+Интеллектуальный чат-бот с регистрацией пользователя и глубоким анализом.
+Запускается в терминале Windows, Linux, macOS и Visual Studio.
 """
-
 import sys
-from datetime import datetime
-from context_manager import ConversationContext
-from ai_engine import VasyaAiEngine
+from user_profile import UserProfile
+from ai_engine import VasyaBrain
 
+def print_banner():
+    print("=" * 60)
+    print("🤖 VASYA AI v3.0 — Твой умный друг и помощник")
+    print("=" * 60)
 
-class VasyaAiBot:
-    """Основной класс чат-бота Vasya Ai."""
+def register_user(profile: UserProfile):
+    """Процедура регистрации нового пользователя."""
+    print("\n📝 Давай познакомимся! Я хочу узнать о тебе всё.")
     
-    def __init__(self):
-        self.context = ConversationContext()
-        self.engine = VasyaAiEngine()
-        self.is_running = True
-        self.commands = ['помощь', 'история', 'очистить', 'контекст', 'темы', 'пока', 'выход']
-    
-    def start(self):
-        """Запускает чат-бота."""
-        self._print_welcome()
+    if not profile.is_registered():
+        name = input("Твоё имя: ").strip()
+        surname = input("Твоя фамилия: ").strip()
         
-        while self.is_running:
+        while True:
             try:
-                user_input = self._get_user_input()
-                
-                if not user_input:
-                    continue
-                
-                # Проверка на команды
-                if user_input.lower().strip() in self.commands:
-                    response = self.engine.process_command(user_input, self.context)
-                    if user_input.lower().strip() in ['пока', 'выход']:
-                        self._say_goodbye()
-                        break
-                else:
-                    # Попытка извлечь имя пользователя
-                    name = self.engine.extract_user_name(user_input)
-                    if name:
-                        self.context.set_user_name(name)
-                    
-                    # Анализ и генерация ответа
-                    category, params = self.engine.analyze_message(user_input, self.context)
-                    response = self.engine.generate_detailed_response(category, params, self.context)
-                
-                # Добавление в историю
-                self.context.add_message("пользователь", user_input)
-                self.context.add_message("Vasya Ai", response)
-                
-                # Вывод ответа
-                self._print_response(response)
-                
-            except KeyboardInterrupt:
-                print("\n\n⚠️  Работа прервана пользователем.")
-                self._say_goodbye()
+                age = int(input("Твой возраст: ").strip())
                 break
-            except Exception as e:
-                print(f"\n❌ Произошла ошибка: {e}")
-                print("Попробуйте ещё раз или введите 'помощь'.")
-    
-    def _print_welcome(self):
-        """Выводит приветственное сообщение."""
-        welcome_art = r"""
- ____   ____  _____ ____  ______ 
-|  _ \ / __ \|  __|___ ||____  |
-| |_) | |  | | |__   / /    / / 
-|  _ <| |  | |  __| / /    / /  
-| |_) | |__| | |__ / /__  / /   
-|____/ \____/|____|_____|/_/    
-      Искусственный Интеллект
-========================================
-"""
-        print(welcome_art)
-        print("🤖 Привет! Я Vasya Ai — твой умный друг и помощник.")
-        print("   Я здесь, чтобы помочь решить любые проблемы!")
-        print("   Введи 'помощь' для списка команд.\n")
+            except ValueError:
+                print("⚠️ Пожалуйста, введи число для возраста.")
         
-        # Персонализированное приветствие
-        if self.context.get_user_name() != "друг":
-            print(f"   С возвращением, {self.context.get_user_name()}! 👋\n")
-    
-    def _get_user_input(self):
-        """Получает ввод от пользователя."""
-        try:
-            user_name = self.context.get_user_name()
-            prompt = f"\n💬 {user_name}: " if user_name != "друг" else "\n💬 Ты: "
-            return input(prompt).strip()
-        except EOFError:
-            return ""
-    
-    def _print_response(self, response):
-        """Выводит ответ бота."""
-        print(f"\n🤖 Vasya Ai: {response}")
-        print("-" * 60)
-    
-    def _say_goodbye(self):
-        """Выводит прощальное сообщение."""
-        user_name = self.context.get_user_name()
-        farewell = f"\n👋 До встречи, {user_name}!" if user_name != "друг" else "\n👋 До встречи!"
-        print(farewell)
-        print("   Помни: я всегда здесь, если понадобишься помощь.")
-        print("   Возвращайся в любое время!\n")
-        print("=" * 60)
-
+        zodiac = input("Твой знак зодиака (например, Овен, Телец): ").strip()
+        
+        profile.name = name
+        profile.surname = surname
+        profile.age = age
+        profile.zodiac = zodiac
+        profile.save_profile()
+        
+        print(f"\n✨ Рад знакомству, {name} {surname}!")
+        print(f"🔮 Знак {zodiac} наделяет тебя особыми качествами.")
+        print("Я сохранил твой профиль. В следующий раз я сразу узнаю тебя.\n")
+    else:
+        print(f"\n👋 С возвращением, {profile.get_full_name()}!")
+        print(f"🔮 Твой знак: {profile.zodiac}, Возраст: {profile.age}")
+        print("Я помню тебя. Готов продолжать общение.\n")
 
 def main():
-    """Точка входа в приложение."""
-    bot = VasyaAiBot()
-    bot.start()
-
+    print_banner()
+    
+    # Инициализация профиля и мозга
+    profile = UserProfile()
+    register_user(profile)
+    
+    brain = VasyaBrain(profile)
+    
+    print("💡 Я готов решать любые твои проблемы.")
+    print("   Напиши 'помощь' для списка команд или просто расскажи о проблеме.")
+    print("-" * 60)
+    
+    while True:
+        try:
+            user_input = input("\n💬 Ты: ").strip()
+            
+            if not user_input:
+                continue
+            
+            lower_input = user_input.lower()
+            
+            # Команды управления
+            if lower_input in ["пока", "выход", "quit", "exit"]:
+                print(f"\n🤖 Vasya Ai: До встречи, {profile.name}! Помни: ты способен на всё!")
+                break
+            
+            if lower_input in ["помощь", "help"]:
+                print("\n📚 **Команды Vasya Ai:**")
+                print("   - помощь: показать это меню")
+                print("   - пока / выход: завершить разговор")
+                print("   - контекст: показать текущий контекст беседы")
+                print("   - сброс: забыть историю переписки")
+                print("   - анкета: показать мои данные")
+                print("   Просто напиши о своей проблеме, и я помогу!")
+                continue
+            
+            if lower_input == "контекст":
+                print(f"\n🧠 **Контекст:** {brain.get_context_summary()}")
+                continue
+                
+            if lower_input == "сброс":
+                brain.conversation_history = []
+                print("\n🗑️ История переписки очищена.")
+                continue
+            
+            if lower_input == "анкета":
+                print(f"\n📋 **Твои данные:**")
+                print(f"   Имя: {profile.name}")
+                print(f"   Фамилия: {profile.surname}")
+                print(f"   Возраст: {profile.age}")
+                print(f"   Знак зодиака: {profile.zodiac}")
+                print(f"   Портрет: {profile.get_psycho_portrait()}")
+                continue
+            
+            # Генерация ответа ИИ
+            response = brain.generate_response(user_input)
+            print(f"\n🤖 Vasya Ai: {response}")
+            
+        except KeyboardInterrupt:
+            print(f"\n\n🤖 Vasya Ai: Прервано. Береги себя, {profile.name}!")
+            sys.exit(0)
+        except Exception as e:
+            print(f"\n⚠️ Произошла ошибка: {e}. Попробуй еще раз.")
 
 if __name__ == "__main__":
     main()
